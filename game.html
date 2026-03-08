@@ -1,0 +1,202 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>SegreQuest: Trash Hero</title>
+<style>
+body{
+    font-family:'Segoe UI',Arial,sans-serif;
+    margin:0; padding:0;
+    background: linear-gradient(to bottom,#a8edea,#fed6e3);
+    overflow-x:hidden; color:#fff; position:relative;
+}
+
+/* Floating particles */
+.particle{
+    position:absolute; width:20px; height:20px; opacity:0.7;
+    background-size:contain; background-repeat:no-repeat;
+    animation:fall linear infinite;
+}
+@keyframes fall{
+    0%{transform:translateY(-50px) rotate(0deg);}
+    100%{transform:translateY(110vh) rotate(360deg);}
+}
+
+/* Header */
+header{
+    padding:20px; text-align:center; background:#00796B; box-shadow:0 4px 10px rgba(0,0,0,0.5);
+}
+header h1{
+    margin:0; font-size:2.5em; color:#00ff99; text-shadow:0 2px 4px rgba(0,0,0,0.7);
+}
+
+/* Navigation */
+nav{
+    padding:10px; text-align:center; background:rgba(0,0,0,0.4);
+}
+nav a{
+    color:white; margin:0 10px; text-decoration:none; font-weight:bold;
+    transition:0.3s;
+}
+nav a:hover{color:#00ff99;}
+
+/* Game header */
+#game-header{
+    display:flex; justify-content:space-around; align-items:center;
+    padding:15px; background:linear-gradient(90deg,#00e676,#00c853);
+    border-bottom:3px solid #00c853;
+    position:sticky; top:0; z-index:10; box-shadow:0 2px 10px rgba(0,0,0,0.5);
+}
+#score,#timer,#level{font-size:1.2em; font-weight:bold; color:#1c1c1c;}
+#timer-bar{
+    width:100%; height:12px; background:#1c1c1c; border-radius:8px; overflow:hidden; margin-top:5px;
+}
+#timer-fill{
+    width:100%; height:100%; background:linear-gradient(90deg,#00ff99,#00c853); transition:width 0.2s;
+}
+
+/* Game container layout */
+#game-container{
+    display:flex; flex-wrap:wrap; justify-content:center; gap:20px; margin:20px; position:relative; z-index:2;
+}
+.bins{
+    flex:1; display:flex; flex-direction:column; gap:20px; max-width:300px;
+}
+.bin{
+    background:linear-gradient(135deg,#00e676,#00c853);
+    padding:25px; border-radius:15px; text-align:center; min-height:120px;
+    box-shadow:0 4px 12px rgba(0,0,0,0.5); font-weight:bold; font-size:1.1em;
+    transition:0.3s;
+}
+.bin.hovered{transform:scale(1.05); box-shadow:0 0 20px #00e676;}
+
+.items{
+    flex:1; display:flex; flex-direction:column; gap:15px; max-width:400px;
+}
+.item{
+    background:linear-gradient(135deg,#2196f3,#64b5f6);
+    padding:15px; border-radius:12px; cursor:grab; text-align:center;
+    user-select:none; font-weight:bold; box-shadow:0 3px 8px rgba(0,0,0,0.5);
+    transition:0.3s; color:#fff;
+}
+.item:active{cursor:grabbing; transform:scale(1.05);}
+.item.removed{opacity:0; transform:scale(0.5); transition:0.5s;}
+
+#message{text-align:center; font-weight:bold; margin-top:15px; color:#00ff99; font-size:1.2em;}
+#reset-btn{
+    display:block; margin:20px auto; padding:12px 25px; border:none; border-radius:15px;
+    background:#00e676; color:black; font-weight:bold; cursor:pointer; box-shadow:0 4px 8px rgba(0,0,0,0.3);
+    transition:0.3s;
+}
+#reset-btn:hover{background:#00c853; color:white;}
+
+/* Confetti */
+#confetti-container{position:fixed; top:0; left:0; width:100%; height:100%; pointer-events:none; overflow:hidden; z-index:9999;}
+.confetti{
+    position:absolute; width:12px; height:12px; opacity:0.8; transform:rotate(45deg);
+    animation:fall 3s linear forwards; border-radius:50%;
+}
+</style>
+</head>
+<body>
+
+<!-- Floating Particles Container -->
+<div id="particle-container"></div>
+
+<header>
+<h1>SegreQuest: Trash Hero</h1>
+</header>
+
+<nav>
+<a href="index.html">Home</a>
+<a href="learn.html">Learn</a>
+</nav>
+
+<div id="game-header">
+<div>
+Score: <span id="score">0</span>
+<div id="timer-bar"><div id="timer-fill"></div></div>
+</div>
+<div id="timer">Time: 60s</div>
+<div id="level">Level: 1</div>
+</div>
+
+<div id="game-container">
+<div class="bins" id="bins-container"></div>
+<div class="items" id="items-container"></div>
+</div>
+
+<p id="message"></p>
+<button id="reset-btn">Restart Game</button>
+<div id="confetti-container"></div>
+
+<audio id="correct-sound" src="https://freesound.org/data/previews/170/170703_2437358-lq.mp3"></audio>
+<audio id="wrong-sound" src="https://freesound.org/data/previews/353/353847_5121236-lq.mp3"></audio>
+
+<script>
+// --- Floating Particles Animation ---
+const particleContainer=document.getElementById('particle-container');
+const particleImages=[
+'https://img.icons8.com/emoji/48/000000/leaf-emoji.png',
+'https://img.icons8.com/color/48/000000/recycle-bin.png',
+'https://img.icons8.com/emoji/48/000000/paper-emoji.png'
+];
+for(let i=0;i<30;i++){
+    const p=document.createElement('div');
+    p.className='particle';
+    p.style.left=Math.random()*100+'%';
+    p.style.animationDuration=(4+Math.random()*4)+'s';
+    p.style.width=(15+Math.random()*15)+'px';
+    p.style.height=p.style.width;
+    p.style.backgroundImage=`url(${particleImages[Math.floor(Math.random()*particleImages.length)]})`;
+    particleContainer.appendChild(p);
+}
+
+// --- Game Logic ---
+const levels=[
+{bins:["Biodegradable","Recyclable","Residual"],
+items:[{name:"Apple Core",type:"Biodegradable"},{name:"Banana Peel",type:"Biodegradable"},{name:"Plastic Bottle",type:"Recyclable"},{name:"Paper",type:"Recyclable"},{name:"Used Tissue",type:"Residual"}],time:60},
+{bins:["Biodegradable","Recyclable","Residual"],
+items:[{name:"Eggshell",type:"Biodegradable"},{name:"Cardboard Box",type:"Recyclable"},{name:"Broken Toy",type:"Residual"},{name:"Plastic Bag",type:"Residual"},{name:"Orange Peel",type:"Biodegradable"}],time:50},
+{bins:["Biodegradable","Recyclable","Residual"],
+items:[{name:"Leaves",type:"Biodegradable"},{name:"Magazine",type:"Recyclable"},{name:"Used Tissue",type:"Residual"},{name:"Paper Cup",type:"Residual"},{name:"Apple Peel",type:"Biodegradable"}],time:40}
+];
+
+let currentLevel=0, score=0, timer=levels[0].time, intervalId=null, streak=0;
+const itemsContainer=document.getElementById("items-container");
+const binsContainer=document.getElementById("bins-container");
+const message=document.getElementById("message");
+const scoreEl=document.getElementById("score");
+const timerEl=document.getElementById("timer");
+const levelEl=document.getElementById("level");
+const timerFill=document.getElementById("timer-fill");
+const correctSound=document.getElementById("correct-sound");
+const wrongSound=document.getElementById("wrong-sound");
+const confettiContainer=document.getElementById("confetti-container");
+
+function renderBins(){binsContainer.innerHTML="";levels[currentLevel].bins.forEach(type=>{const bin=document.createElement("div");bin.className="bin";bin.dataset.type=type;bin.innerText=type;binsContainer.appendChild(bin);});}
+function shuffleArray(arr){for(let i=arr.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[arr[i],arr[j]]=[arr[j],arr[i]];}return arr;}
+function renderItems(){const shuffled=shuffleArray([...levels[currentLevel].items]);itemsContainer.innerHTML="";shuffled.forEach(item=>{const div=document.createElement("div");div.className="item";div.draggable=true;div.dataset.type=item.type;div.innerText=item.name;itemsContainer.appendChild(div);});addDragEvents();}
+function addDragEvents(){
+const items=document.querySelectorAll(".item");let draggedItem=null;
+items.forEach(item=>{item.addEventListener("dragstart",e=>{draggedItem=e.target;});item.addEventListener("touchstart",e=>{draggedItem=e.target;});});
+const bins=document.querySelectorAll(".bin");
+bins.forEach(bin=>{
+bin.addEventListener("dragover",e=>{e.preventDefault();bin.classList.add("hovered");});
+bin.addEventListener("dragleave",e=>{bin.classList.remove("hovered");});
+bin.addEventListener("drop",e=>{bin.classList.remove("hovered");dropItem(bin);});
+bin.addEventListener("touchend",e=>{const rect=bin.getBoundingClientRect();const touch=e.changedTouches[0];if(touch.clientX>rect.left&&touch.clientX<rect.right&&touch.clientY>rect.top&&touch.clientY<rect.bottom){dropItem(bin);}});
+function dropItem(bin){if(!draggedItem)return;if(bin.dataset.type===draggedItem.dataset.type){draggedItem.classList.add("removed");setTimeout(()=>{draggedItem.remove();},400);score+=10;streak++;message.innerText=`✅ Correct! +10 points`;correctSound.play();if(streak%3===0){launchConfetti();score+=5;message.innerText+=` 🎉 Streak bonus +5!`;}}else{score-=5;streak=0;message.innerText="❌ Wrong bin! -5 points";wrongSound.play();}scoreEl.innerText=score;draggedItem=null;if(document.querySelectorAll(".item").length===0){stopTimer();nextLevel();}}});
+}
+
+function launchConfetti(){for(let i=0;i<120;i++){const confetti=document.createElement("div");confetti.className="confetti";confetti.style.backgroundColor=`hsl(${Math.random()*360},100%,50%)`;confetti.style.left=Math.random()*100+"%";confetti.style.animationDuration=(2+Math.random()*2)+"s";confettiContainer.appendChild(confetti);setTimeout(()=>{confetti.remove();},4000);}}
+function startTimer(){timer=levels[currentLevel].time;updateTimer();timerEl.innerText=`Time: ${timer}s`;intervalId=setInterval(()=>{timer--;timerEl.innerText=`Time: ${timer}s`;updateTimer();if(timer<=0){clearInterval(intervalId);message.innerText=`⏰ Time's up! Score: ${score}`;document.querySelectorAll(".item").forEach(i=>i.remove());nextLevel();}},1000);}
+function stopTimer(){clearInterval(intervalId);}
+function updateTimer(){timerFill.style.width=(timer/levels[currentLevel].time*100)+"%";}
+function nextLevel(){if(currentLevel<levels.length-1){currentLevel++;levelEl.innerText=`Level: ${currentLevel+1}`;message.innerText=`🎉 Level ${currentLevel} Complete!`;renderBins();renderItems();streak=0;stopTimer();startTimer();}else{message.innerText=`🏁 Game Over! Final Score: ${score}`;}}
+document.getElementById("reset-btn").addEventListener("click",()=>{score=0;currentLevel=0;scoreEl.innerText=score;message.innerText='';levelEl.innerText='Level: 1';streak=0;renderBins();renderItems();stopTimer();startTimer();});
+renderBins();renderItems();startTimer();
+</script>
+</body>
+</html>

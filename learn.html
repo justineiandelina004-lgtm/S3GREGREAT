@@ -1,0 +1,66 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>SegreGREAT | Learn</title>
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+<header>
+<h1>SegreGREAT Learn</h1>
+<a href="index.html" class="start-btn">Back Home</a>
+</header>
+
+<nav>
+<a href="index.html">Home</a>
+<a href="game.html">Play Game</a>
+</nav>
+
+<section class="section">
+<h2>Global Waste Statistics</h2>
+<div class="stats-grid">
+  <div class="stat-card"><h3>2,000,000,000</h3><p>Tons of waste produced yearly worldwide</p></div>
+  <div class="stat-card"><h3>60%</h3><p>Recyclable waste percentage</p></div>
+  <div class="stat-card"><h3>33%</h3><p>Improperly managed waste</p></div>
+  <div class="stat-card"><h3>1,000,000</h3><p>Marine animals affected by plastic</p></div>
+</div>
+</section>
+
+<section class="section">
+<h2>Click a Waste Type to Learn More</h2>
+<div class="waste-grid">
+  <button class="waste-btn" onclick="showInfo('Biodegradable')">Biodegradable</button>
+  <button class="waste-btn" onclick="showInfo('Recyclable')">Recyclable</button>
+  <button class="waste-btn" onclick="showInfo('Residual')">Residual</button>
+  <button class="waste-btn" onclick="showInfo('Hazardous')">Hazardous</button>
+  <button class="waste-btn" onclick="showInfo('Plastic')">Plastic</button>
+  <button class="waste-btn" onclick="showInfo('Glass')">Glass</button>
+  <button class="waste-btn" onclick="showInfo('Metal')">Metal</button>
+  <button class="waste-btn" onclick="showInfo('E-Waste')">E-Waste</button>
+</div>
+<div id="waste-info" class="highlight" style="margin-top:20px;">
+Click a waste type above to see its details.
+</div>
+</section>
+
+<script>
+const wasteDetails = {
+"Biodegradable":"Food scraps, garden waste, paper towels. Decomposes naturally into compost.",
+"Recyclable":"Plastics, glass, metals, paper. Can be reused to reduce landfill load.",
+"Residual":"Non-recyclable items that cannot be safely composted or recycled.",
+"Hazardous":"Batteries, chemicals, medical waste. Requires special handling.",
+"Plastic":"Bottles, bags, packaging. Major contributor to ocean pollution.",
+"Glass":"Bottles and jars. Can be recycled repeatedly, handle carefully.",
+"Metal":"Aluminum cans, scrap metal. Valuable for recycling.",
+"E-Waste":"Old electronics, batteries, chargers. Contains harmful materials."
+};
+
+function showInfo(type){
+document.getElementById("waste-info").innerHTML=`<b>${type} Waste:</b> ${wasteDetails[type]}`;
+}
+</script>
+
+</body>
+</html>
